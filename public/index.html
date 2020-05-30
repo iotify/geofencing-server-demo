@@ -1,0 +1,195 @@
+<html>
+  <body>
+    <div id="example" class="container">
+      <div class="row row-center">
+        <div class="column">
+          <h2 style="text-align: center;margin-top:50px;">
+            Geofencing Server Application Demo
+          </h2>
+          <p>
+            The server side application will receive messages from IoTIFY
+            simulator and will instruct the car ignition to shutdown when the
+            vehicle drives beyond the specified radius from the starting point.
+            Follow the tutorial at
+          </p>
+
+          <p v-if="inited">
+            <strong style="color:green;">Connected</strong> Received messages
+            from the server
+          </p>
+          <p v-else>
+            <strong style="color:red;">Not connected</strong> Send HTTP POST
+            message to the URL. {{location}}
+          </p>
+        </div>
+      </div>
+      <div class="row">
+        <div class="column column-75">
+          <l-map style="height: 600px" :zoom="zoom" :center="center">
+            <l-tile-layer
+              :url="url"
+              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            ></l-tile-layer>
+            <div v-if="inited">
+              <l-polyline :lat-lngs="path"></l-polyline>
+              <l-marker
+                v-for="(value, key) in markers"
+                :key="key"
+                :lat-lng="[value.lat, value.lng]"
+              >
+                <l-popup
+                  ><h5>Client: {{key}}</h5>
+                  <p>{{value }}</p>
+                  <h5>odometer: {{odometer}} meters</h5></l-popup
+                ></l-marker
+              >
+              <l-circle
+                :lat-lng="geofence.center"
+                :radius="geofence.radius"
+                :color="geofence.color"
+              ></l-circle>
+            </div>
+          </l-map>
+        </div>
+        <div class="column column-25">
+          <fieldset>
+            <label for="radius">Geofencing Radius</label>
+            <input
+              type="number"
+              v-model="geofence.radius"
+              placeholder="1000"
+              id="radius"
+            />
+            <input
+              class="button-primary"
+              type="button"
+              @click="geofence.radius=1000"
+              value="Default"
+            />
+            <p>Radial Distance: {{distance}} meters</p>
+            <p>Odometer: {{odometer}} meters</p>
+            <p>
+              Ignition Control:
+              <strong v-if="ignition" style="color:green;">ON</strong>
+              <strong v-else style="color:red;">OFF</strong>
+            </p>
+          </fieldset>
+        </div>
+      </div>
+
+      Message Logs
+      <pre
+        style="height: auto;
+      max-height: 200px;
+      overflow: auto;"
+      ><code>
+        {{logs}}
+       </code></pre>
+    </div>
+    <link rel="stylesheet" href="//unpkg.com/leaflet/dist/leaflet.css" />
+    <link
+      rel="stylesheet"
+      href="//fonts.googleapis.com/css?family=Roboto:300,300italic,700,700italic"
+    />
+    <link
+      rel="stylesheet"
+      href="//cdnjs.cloudflare.com/ajax/libs/normalize/5.0.0/normalize.css"
+    />
+    <link
+      rel="stylesheet"
+      href="//cdnjs.cloudflare.com/ajax/libs/milligram/1.3.0/milligram.css"
+    />
+
+    <script src="https://cdn.jsdelivr.net/npm/vue-socket.io@3.0.7/dist/vue-socketio.min.js"></script>
+    <script src="//unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script src="//unpkg.com/vue2-leaflet"></script>
+    <script src="https://unpkg.com/vue"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/geolib@3.3.1/lib/index.min.js"></script>
+
+    <script>
+      Vue.use(
+        new VueSocketIO({
+          debug: true,
+          connection: "/",
+          options: {
+            //path: "/my-app/"
+          } //Optional options
+        })
+      );
+
+      new Vue({
+        components: {
+          "l-map": window.Vue2Leaflet.LMap,
+          "l-tile-layer": window.Vue2Leaflet.LTileLayer,
+          "l-marker": window.Vue2Leaflet.LMarker,
+          "l-polyline": window.Vue2Leaflet.LPolyline,
+          "l-circle": window.Vue2Leaflet.LCircle,
+          "l-popup": window.Vue2Leaflet.LPopup
+        },
+        el: "#example",
+        sockets: {
+          connect: function() {
+            console.log("socket connected");
+          },
+          request: function(data) {
+            console.log("Received", data);
+            this.logs += "\r\n" + JSON.stringify(data);
+            let ignition = true;
+            if (!this.inited) {
+              this.center = [data.lat, data.lng];
+              this.geofence.center = [data.lat, data.lng];
+              this.inited = true;
+            } else {
+              // Update disatance travelled
+              let lastPos = this.markers[data.client];
+
+              this.odometer += window.geolib.getDistance(
+                { latitude: data.lat, longitude: data.lng },
+                { latitude: lastPos.lat, longitude: lastPos.lng }
+              );
+
+              this.distance = window.geolib.getDistance(
+                { latitude: data.lat, longitude: data.lng },
+                {
+                  latitude: this.geofence.center[0],
+                  longitude: this.geofence.center[1]
+                }
+              );
+              if (this.distance > this.geofence.radius) {
+                this.ignition = false;
+                this.logs += "\r\n Ignition is turned off";
+              } else {
+                this.ignition = true;
+              }
+            }
+            this.$set(this.markers, data.client, data);
+            this.path.push([data.lat, data.lng]);
+
+            this.$socket.emit("response", { ignition: ignition });
+          }
+        },
+        data() {
+          return {
+            url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+            zoom: 10,
+            inited: false,
+            path: [],
+            odometer: 0,
+            distance: 0,
+            ignition: true,
+            logs: "",
+            location: window.location + "endpoint",
+            geofence: {
+              center: [],
+              radius: 1000,
+              color: "red"
+            },
+            markers: {},
+            center: [48.864716, 2.349014]
+          };
+        }
+      });
+    </script>
+  </body>
+</html>
