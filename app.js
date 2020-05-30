@@ -8,6 +8,7 @@ var path = require("path");
 var cookieParser = require("cookie-parser");
 var logger = require("morgan");
 var webclient;
+var ignition = true;
 
 app.use(logger("dev"));
 app.use(express.json());
@@ -22,19 +23,18 @@ io.on("connection", socket => {
   socket.on("disconnect", reason => {
     webclient = null;
   });
+  socket.on("ignition", msg => {
+    console.log("Received Ignition command ", msg);
+    ignition = msg;
+  });
 });
 
 app.post("/endpoint", (req, res) => {
   console.log("Received", req.body);
   if (webclient) {
     webclient.emit("request", req.body);
-    webclient.once("response", msg => {
-      console.log("response: " + msg);
-      res.json(msg);
-    });
-  } else {
-    res.status(400).end();
   }
+  res.json({ ignition: ignition });
 });
 
 http.listen(process.env.PORT || 8080, () => {
