@@ -2,6 +2,7 @@
 
 This application is a simple demonstration of the functionality of a server side application, which monitors the GPS location of car. The application is intentionally minimalistic and is only developed to augment the capabilities of IoTIFY device simulator.
 
+![Snapshot](geofencing.PNG)
 ### How to run
 
 install the npm dependencies and then run app.js
