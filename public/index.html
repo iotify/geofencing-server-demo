@@ -4,14 +4,13 @@
       <div>
         <div class="row row-center">
           <div class="column">
-            <h2 style="text-align: center;margin-top:50px;">
+            <h2 style="text-align: center;margin-top:20px;">
               IoTIFY Geofencing Server Application Demo
             </h2>
             <p>
-              The server side application will receive messages from IoTIFY
-              simulator and will instruct the car ignition to shutdown when the
-              vehicle drives beyond the specified radius from the starting
-              point. Follow the tutorial at
+              An example of geofencing. Turn the ignition off, when car moves
+              beyond specified geofencing boundary. Follow the complete tutorial
+              at
               <a
                 href="https://docs.iotify.io/iot-testing/iot-functional-testing/geofencing-validation"
                 target="_blank"
@@ -20,11 +19,11 @@
             </p>
 
             <p v-if="inited">
-              <strong style="color:green;">Connected</strong> Received messages
+              <strong style="color:green;">Connected:</strong> Received messages
               from the server
             </p>
             <p v-else>
-              <strong style="color:red;">Not connected</strong>
+              <strong style="color:red;">Not connected:</strong>
               Send HTTP POST message to the URL. {{location}}
             </p>
           </div>
@@ -72,8 +71,8 @@
                 @click="geofence.radius=1000"
                 value="Default"
               />
-              <p>Radial Distance: {{distance}} meters</p>
-              <p>Odometer: {{odometer}} meters</p>
+              <p>Measured Radial Distance: {{distance}}m</p>
+
               <p>
                 Ignition:
                 <!-- Rounded switch -->
@@ -92,7 +91,7 @@
             </fieldset>
           </div>
         </div>
-        Message Logs
+        Received Message Logs
         <pre
           style="height: auto;
               max-height: 200px;

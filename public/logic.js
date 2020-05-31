@@ -34,11 +34,6 @@ new Vue({
         // Update disatance travelled
         let lastPos = this.markers[data.client];
 
-        this.odometer += window.geolib.getDistance(
-          { latitude: data.lat, longitude: data.lng },
-          { latitude: lastPos.lat, longitude: lastPos.lng }
-        );
-
         this.distance = window.geolib.getDistance(
           { latitude: data.lat, longitude: data.lng },
           {
@@ -46,11 +41,6 @@ new Vue({
             longitude: this.geofence.center[1]
           }
         );
-        if (this.distance > this.geofence.radius) {
-          this.ignition = false;
-          this.logs +=
-            "\r\n Ignition is turned off automatically due to geofencing";
-        }
       }
       this.$set(this.markers, data.client, data);
       this.path.push([data.lat, data.lng]);
@@ -69,7 +59,7 @@ new Vue({
       zoom: 10,
       inited: false,
       path: [],
-      odometer: 0,
+
       distance: 0,
       ignition: true,
       logs: "",
