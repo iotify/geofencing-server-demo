@@ -2,6 +2,8 @@
 
 This application is a simple server side application, which monitors the GPS location of car. The application is intentionally minimalistic and is only developed to augment the capabilities of IoTIFY device simulator.
 
+Follow the  [tutorial](https://docs.iotify.io/iot-testing/iot-functional-testing/geofencing-validation) to run and end to end example of geofencing application along with this application. 
+
 ![Snapshot](geofencing.PNG)
 ### How to run
 
